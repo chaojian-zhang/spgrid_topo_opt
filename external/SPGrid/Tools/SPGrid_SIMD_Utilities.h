@@ -7,6 +7,7 @@
 #ifndef __SPGrid_SIMD_Utilities_h__
 #define __SPGrid_SIMD_Utilities_h__
 
+#include <immintrin.h>
 #include <type_traits>
 #include <iostream>
 #include <cstdint>
