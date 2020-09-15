@@ -1,24 +1,24 @@
 from topo_opt import TopoOpt
 import taichi as tc
+import os
 
 version = 8
 wireframe = False
-narrow_band = False
+narrow_band = True
 plane_force = True
 volume_fraction=0.08
 
-use_mirror = True
+use_mirror = False
 
 # Initialize
-n = 1800
+n = 128
 #tc.core.set_core_trigger_gdb_when_crash(True);
-opt = TopoOpt(res=(n, n, n), version=version, volume_fraction=volume_fraction,
-              grid_update_start=5 if narrow_band else 1000000,
-              progressive_vol_frac=5, cg_tolerance=1e-3,
-              minimum_stiffness=0, minimum_density=1e-2,
-              fix_cells_at_dirichlet=False, fix_cells_near_force=True, connectivity_filtering=True, adaptive_min_fraction=False, verbose_snapshot=False)
+opt = TopoOpt(res=(n, n, n), version=version, volume_fraction=volume_fraction, max_iterations=25,
+              grid_update_start=5 if narrow_band else 1000000, progressive_vol_frac=5, cg_tolerance=1e-3,
+              minimum_stiffness=0, minimum_density=1e-2, fix_cells_at_dirichlet=False, fix_cells_near_force=True, 
+              connectivity_filtering=True, adaptive_min_fraction=False, verbose_snapshot=False)
 
-x, y, z = 0.1, 0.1, 0.4
+x, y, z = 0.1, 0.1, 0.2
 if use_mirror:
   mirror = 'xz'
 else:
@@ -41,3 +41,4 @@ else:
 
 # Optimize
 opt.run()
+# os.system("ti run convert_fem_solve {}".format(opt.get_fem_file_name(opt.max_iterations - 1)))
