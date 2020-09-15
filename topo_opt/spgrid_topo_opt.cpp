@@ -809,6 +809,12 @@ std::string SPGridTopologyOptimization3D::general_action(const Config &param) {
     add_plane_dirichlet_bc(
         param.get<std::string>("axis_to_fix"), param.get<int>("axis_to_search"),
         param.get<int>("extreme"), param.get<Vector>("value"));
+  } else if (action == "add_customplane_dirichlet_bc") {
+    add_customplane_dirichlet_bc(
+        param.get<std::string>("axis_to_fix"), 
+        param.get<Vector>("p0"),
+        param.get<Vector>("p1"),
+        param.get<Vector>("p2")); 
   } else if (action == "populate_grid") {
     populate_grid(param);
   } else if (action == "wireframe") {
