@@ -87,13 +87,16 @@ auto convert_fem_solve = [](const std::vector<std::string> &parameters) {
     TC_INFO("Good. No nan nor inf detected.");
   }
 
+  // override with --all
   if (parameters.size() <= 1) {
-    param.density.blocks.clear();
+    param.forces.clear();
+    param.dirichlet_cells.clear();
+    param.dirichlet_nodes.clear();
   }
 
   TextSerializer ser2;
   ser2("FEM Solve Parameters", param);
-  ser2.write_to_file("human_readable.txt");
+  ser2.write_to_file("params.txt");
 };
 
 TC_REGISTER_TASK(convert_fem_solve);
