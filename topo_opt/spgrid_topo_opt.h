@@ -483,6 +483,94 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
     return add_force(ipos, f, size);
   }
 
+  void add_customplane_force(Vector f,
+                              Vector p0,
+                              Vector p1,
+                              Vector p2) {
+    int node_count = 0;
+
+    Vectori p0n = ((p0 + Vector(0.5_f)) * inv_dx).template cast<int>();
+    Vectori p1n = ((p1 + Vector(0.5_f)) * inv_dx).template cast<int>();
+    Vectori p2n = ((p2 + Vector(0.5_f)) * inv_dx).template cast<int>();
+
+    Vector ptp0 = p0n.template cast<real>() * dx - Vector(0.5_f);
+    Vector ptp1 = p1n.template cast<real>() * dx - Vector(0.5_f);
+    Vector ptp2 = p2n.template cast<real>() * dx - Vector(0.5_f);
+
+    Vector at = ptp1 - ptp0;
+    Vector bt = ptp2 - ptp0;
+    Vector ct = ptp2 - ptp1;
+
+    real edge1 = sqrt(at[0]*at[0] + at[1]*at[1] + at[2]*at[2]);
+    real edge3 = sqrt(bt[0]*bt[0] + bt[1]*bt[1] + bt[2]*bt[2]);
+    real edge2 = sqrt(ct[0]*ct[0] + ct[1]*ct[1] + ct[2]*ct[2]);
+
+    real perim = (edge1 + edge2 + edge3)/2;
+    real tri_area = sqrt(perim * (perim - edge1) * (perim - edge2) * (perim - edge3));
+
+    real a = at[1]*bt[2] - bt[1]*at[2];
+    real b = bt[0]*at[2] - at[0]*bt[2];
+    real c = at[0]*bt[1] - at[1]*bt[0];
+    real d = - a*ptp0[0] - b*ptp0[1] - c*ptp0[2];
+
+    Vector p, att, btt, ctt;
+    real inner_edge1, inner_edge2, inner_edge3, perimeter1, perimeter2, perimeter3;
+    real area1, area2, area3;
+
+    for (auto &ind : get_node_region()) {
+      p = normalize_pos(ind.get_pos());
+      if (node_flag(ind.get_ipos()) && a*p[0]+b*p[1]+c*p[2]+d == 0) {
+        att = ptp0 - p;
+        btt = ptp1 - p;
+        ctt = ptp2 - p;
+
+        inner_edge1 = sqrt(att[0]*att[0] + att[1]*att[1] + att[2]*att[2]);
+        inner_edge2 = sqrt(btt[0]*btt[0] + btt[1]*btt[1] + btt[2]*btt[2]);
+        inner_edge3 = sqrt(ctt[0]*ctt[0] + ctt[1]*ctt[1] + ctt[2]*ctt[2]);
+
+        perimeter1 = (inner_edge1 + inner_edge2 + edge1)/2;
+        perimeter2 = (inner_edge2 + inner_edge3 + edge2)/2;
+        perimeter3 = (inner_edge3 + inner_edge1 + edge3)/2;
+
+        area1 = sqrt(perimeter1 * (perimeter1 - inner_edge1) * (perimeter1 - inner_edge2) * (perimeter1 - edge1));
+        area2 = sqrt(perimeter2 * (perimeter2 - inner_edge2) * (perimeter2 - inner_edge3) * (perimeter2 - edge2));
+        area3 = sqrt(perimeter3 * (perimeter3 - inner_edge3) * (perimeter3 - inner_edge1) * (perimeter3 - edge3));
+
+        TC_TRACE("Sum of areas: {}", area1+area2+area3);
+        TC_TRACE("Tri-area {}", tri_area);
+
+        if (area1+area2+area3 == tri_area){
+          node_count += 1;
+        }
+      }
+    }
+    TC_TRACE("Adding force to {} nodes.", node_count);
+    for (auto &ind : get_node_region()) {
+      p = normalize_pos(ind.get_pos());
+      if (node_flag(ind.get_ipos()) && a*p[0]+b*p[1]+c*p[2]+d == 0) {
+        att = ptp0 - p;
+        btt = ptp1 - p;
+        ctt = ptp2 - p;
+
+        inner_edge1 = sqrt(att[0]*att[0] + att[1]*att[1] + att[2]*att[2]);
+        inner_edge2 = sqrt(btt[0]*btt[0] + btt[1]*btt[1] + btt[2]*btt[2]);
+        inner_edge3 = sqrt(ctt[0]*ctt[0] + ctt[1]*ctt[1] + ctt[2]*ctt[2]);
+
+        perimeter1 = (inner_edge1 + inner_edge2 + edge1)/2;
+        perimeter2 = (inner_edge2 + inner_edge3 + edge2)/2;
+        perimeter3 = (inner_edge3 + inner_edge1 + edge3)/2;
+
+        area1 = sqrt(perimeter1 * (perimeter1 - inner_edge1) * (perimeter1 - inner_edge2) * (perimeter1 - edge1));
+        area2 = sqrt(perimeter2 * (perimeter2 - inner_edge2) * (perimeter2 - inner_edge3) * (perimeter2 - edge2));
+        area3 = sqrt(perimeter3 * (perimeter3 - inner_edge3) * (perimeter3 - inner_edge1) * (perimeter3 - edge3));
+
+        if (area1+area2+area3 == tri_area){
+          add_force(ind.get_ipos(), f * (1.0_f / node_count), Vectori(1));
+        }
+      }
+    }
+  }
+
   // extreme = +/-1
   void add_plane_force(Vector f,
                        int axis,

@@ -58,7 +58,7 @@ class TopoOpt(Simulation):
     os.makedirs(self.snapshot_directory, exist_ok=True)
     os.makedirs(self.fem_directory, exist_ok=True)
     os.makedirs(self.fem_obj_directory, exist_ok=True)
-    self.max_iterations = kwargs.get('max_iterations', 1000)
+    self.max_iterations = kwargs.get('max_iterations', 1)
     
     self.log_fn = os.path.join(self.working_directory, 'log.txt')
     tc.start_memory_monitoring(os.path.join(self.working_directory, 'memory_usage.txt'), interval=0.1)
@@ -102,7 +102,10 @@ class TopoOpt(Simulation):
 
   def output(self, iter):
     pass
-    #self.general_action(action='output', file_name=self.get_frame_file_name(iter))
+    # self.general_action(action='output', file_name=self.get_frame_file_name(iter))
+
+  def get_fem_file_name(self, iter):
+    return "{}/{:05}.tcb.zip".format(self.fem_directory, iter)
 
   def get_snapshot_file_name(self, iter):
     return "{}/{:05}.tcb.zip".format(self.snapshot_directory, iter)
@@ -121,6 +124,7 @@ class TopoOpt(Simulation):
     if self.snapshot_period != 0 and i % self.snapshot_period == 0:
       self.general_action('save_state',
                           filename=self.get_snapshot_file_name(i))
+
     return objective
 
   def run(self):
@@ -147,9 +151,8 @@ class TopoOpt(Simulation):
 
     blklog.close()
 
-  def dump(self):
-    self.general_action(
-        name='write_density', fn='density_%d.bin' % (self.res[0] + 1))
+  def dump(self, i):
+    self.general_action('save_density', fn=self.get_snapshot_file_name(i))
 
   def add_dirichlet_bc(self, center, radius=0.05, axis='xyz', value=(0, 0, 0)):
     assert isinstance(axis, str)
@@ -157,7 +160,7 @@ class TopoOpt(Simulation):
       assert ch in 'xyz'
     self.general_action('add_dirichlet_bc', center=center, value=value, radius=radius, axis=axis)
 
-  def add_plane_dirichlet_bc(self, axis_to_fix, axis_to_search, extreme, value=(0, 0, 0), bound1=(-0.51, -0.51, -0.51), bound2=(0.51, 0.51, 0.51)):
+  def add_plane_dirichlet_bc(self, axis_to_fix, axis_to_search, extreme, value=(0, 0, 0), bound1=(-1, -1, -1), bound2=(1, 1, 1)):
     assert isinstance(axis_to_fix, str)
     for ch in axis_to_fix:
       assert ch in 'xyz'
@@ -167,7 +170,11 @@ class TopoOpt(Simulation):
   def add_load(self, center, force, size=1e-6):
     self.general_action('add_load', center=center, force=force, size=size)
 
-  def add_plane_load(self, force, axis_to_search=None, axis=None, extreme=1, bound1=(-0.51, -0.51, -0.51), bound2=(0.51, 0.51, 0.51)):
+  def add_customplane_load(self, force, p0=(0.0678907, 0.1000000, 0.1000000), p1=(-0.1234312, -0.1000000, 0.1000000), p2=(0.0678907, -0.1000000, 0.1000000)):
+    print(p0, p1, p2)
+    self.general_action(action='add_customplane_load', force=force, p0=p0, p1=p1, p2=p2)
+
+  def add_plane_load(self, force, axis_to_search=None, axis=None, extreme=1, bound1=(-1, -1, -1), bound2=(1, 1, 1)):
     if axis_to_search is None:
       assert axis is not None
       axis_to_search = axis
