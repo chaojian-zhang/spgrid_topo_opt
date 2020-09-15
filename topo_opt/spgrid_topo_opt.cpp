@@ -752,10 +752,15 @@ std::string SPGridTopologyOptimization3D::general_action(const Config &param) {
           "There are forces added to nodes without active neighbouring "
           "cells; these forces on node will be ignored.");
     }
+  } else if (action == "add_customplane_load") {
+    add_customplane_force(param.get<Vector>("force"),
+                    param.get<Vector>("p0"),
+                    param.get<Vector>("p1"),
+                    param.get<Vector>("p2"));
   } else if (action == "add_plane_load") {
     add_plane_force(param.get<Vector>("force"), param.get<int>("axis"),
                     param.get<int>("extreme"), param.get<Vector>("bound1"),
-                    param.get<Vector>("bound2"));
+                    param.get<Vector>("bound2"));                    
   } else if (action == "add_precise_plane_force_bridge") {
     add_precise_plane_force_bridge();
   } else if (action == "add_pressure_load") {
