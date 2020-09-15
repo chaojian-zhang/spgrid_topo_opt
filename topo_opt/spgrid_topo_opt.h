@@ -486,12 +486,13 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
   void add_customplane_force(Vector f,
                               Vector p0,
                               Vector p1,
-                              Vector p2) {
+                              Vector p2,
+                              real scale) {
     int node_count = 0;
 
-    Vectori p0n = ((p0 + Vector(0.5_f)) * inv_dx).template cast<int>();
-    Vectori p1n = ((p1 + Vector(0.5_f)) * inv_dx).template cast<int>();
-    Vectori p2n = ((p2 + Vector(0.5_f)) * inv_dx).template cast<int>();
+    Vectori p0n = ((scale * p0 + Vector(0.5_f)) * inv_dx).template cast<int>();
+    Vectori p1n = ((scale * p1 + Vector(0.5_f)) * inv_dx).template cast<int>();
+    Vectori p2n = ((scale * p2 + Vector(0.5_f)) * inv_dx).template cast<int>();
 
     Vector ptp0 = p0n.template cast<real>() * dx - Vector(0.5_f);
     Vector ptp1 = p1n.template cast<real>() * dx - Vector(0.5_f);
@@ -645,12 +646,13 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
                                       Vector p0,
                                       Vector p1,
                                       Vector p2,
+                                      real scale,
                                       Vector value = Vector(0)) {
     auto sparse_flags = grid->flags();
 
-    Vectori p0n = ((p0 + Vector(0.5_f)) * inv_dx).template cast<int>();
-    Vectori p1n = ((p1 + Vector(0.5_f)) * inv_dx).template cast<int>();
-    Vectori p2n = ((p2 + Vector(0.5_f)) * inv_dx).template cast<int>();
+    Vectori p0n = ((scale * p0 + Vector(0.5_f)) * inv_dx).template cast<int>();
+    Vectori p1n = ((scale * p1 + Vector(0.5_f)) * inv_dx).template cast<int>();
+    Vectori p2n = ((scale * p2 + Vector(0.5_f)) * inv_dx).template cast<int>();
 
     Vector ptp0 = p0n.template cast<real>() * dx - Vector(0.5_f);
     Vector ptp1 = p1n.template cast<real>() * dx - Vector(0.5_f);

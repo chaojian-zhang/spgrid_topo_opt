@@ -20,6 +20,8 @@ class TopoOpt(Simulation):
     suffix = ''
 
     self.version = kwargs.get('version', 0)
+    self.scale = kwargs.get('scale', 1.0)
+
     if 'version' in kwargs:
       suffix += '_v{:0d}'.format(int(self.version))
 
@@ -171,16 +173,26 @@ class TopoOpt(Simulation):
     self.general_action('add_load', center=center, force=force, size=size)
 
   def add_customplane_dirichlet_bc(self, axis_to_fix, p0, p1, p2):
-    self.general_action(action='add_customplane_dirichlet_bc', axis_to_fix=axis_to_fix, p0=p0, p1=p1, p2=p2)
+    self.general_action(action='add_customplane_dirichlet_bc', axis_to_fix=axis_to_fix, p0=p0, p1=p1, p2=p2, scale=self.scale)
 
   def add_customplane_load(self, force, p0, p1, p2):
-    self.general_action(action='add_customplane_load', force=force, p0=p0, p1=p1, p2=p2)
+    self.general_action(action='add_customplane_load', force=force, p0=p0, p1=p1, p2=p2, scale=self.scale)
 
   def add_plane_load(self, force, axis_to_search=None, axis=None, extreme=1, bound1=(-1, -1, -1), bound2=(1, 1, 1)):
     if axis_to_search is None:
       assert axis is not None
       axis_to_search = axis
     self.general_action(action='add_plane_load', force=force, axis=axis_to_search, extreme=extreme, bound1=bound1, bound2=bound2)
+
+  def import_mesh(self, filename, adaptive):
+    tex = tc.Texture(
+      'mesh',
+      translate=(0.5, 0.5, 0.5),
+      scale=(self.scale, self.scale, self.scale),
+      adaptive=adaptive,
+      filename=filename)
+
+    self.populate_grid(domain_type='texture', tex_id=tex.id)
 
   def populate_grid(self, domain_type, **kwargs):
     kwargs = tc.visual.asset_manager.asset_ptr_to_id(kwargs)
