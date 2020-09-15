@@ -170,8 +170,7 @@ class TopoOpt(Simulation):
   def add_load(self, center, force, size=1e-6):
     self.general_action('add_load', center=center, force=force, size=size)
 
-  def add_customplane_load(self, force, p0=(0.0678907, 0.1000000, 0.1000000), p1=(-0.1234312, -0.1000000, 0.1000000), p2=(0.0678907, -0.1000000, 0.1000000)):
-    print(p0, p1, p2)
+  def add_customplane_load(self, force, p0, p1, p2):
     self.general_action(action='add_customplane_load', force=force, p0=p0, p1=p1, p2=p2)
 
   def add_plane_load(self, force, axis_to_search=None, axis=None, extreme=1, bound1=(-1, -1, -1), bound2=(1, 1, 1)):

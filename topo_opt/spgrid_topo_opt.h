@@ -482,7 +482,7 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
         ((pos + Vector(0.5)) * inv_dx).template cast<int>() + Vectori(padding);
     return add_force(ipos, f, size);
   }
-
+  
   void add_customplane_force(Vector f,
                               Vector p0,
                               Vector p1,
@@ -535,9 +535,6 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
         area1 = sqrt(perimeter1 * (perimeter1 - inner_edge1) * (perimeter1 - inner_edge2) * (perimeter1 - edge1));
         area2 = sqrt(perimeter2 * (perimeter2 - inner_edge2) * (perimeter2 - inner_edge3) * (perimeter2 - edge2));
         area3 = sqrt(perimeter3 * (perimeter3 - inner_edge3) * (perimeter3 - inner_edge1) * (perimeter3 - edge3));
-
-        TC_TRACE("Sum of areas: {}", area1+area2+area3);
-        TC_TRACE("Tri-area {}", tri_area);
 
         if (area1+area2+area3 == tri_area){
           node_count += 1;
