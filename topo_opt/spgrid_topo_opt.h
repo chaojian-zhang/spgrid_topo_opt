@@ -487,7 +487,8 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
                               Vector p0,
                               Vector p1,
                               Vector p2,
-                              real scale) {
+                              real scale,
+                              real thresh=0.003) {
     int node_count = 0;
 
     Vectori p0n = ((scale * p0 + Vector(0.5_f)) * inv_dx).template cast<int>();
@@ -533,12 +534,15 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
         perimeter2 = (inner_edge2 + inner_edge3 + edge2)/2;
         perimeter3 = (inner_edge3 + inner_edge1 + edge3)/2;
 
-        area1 = sqrt(perimeter1 * (perimeter1 - inner_edge1) * (perimeter1 - inner_edge2) * (perimeter1 - edge1));
-        area2 = sqrt(perimeter2 * (perimeter2 - inner_edge2) * (perimeter2 - inner_edge3) * (perimeter2 - edge2));
-        area3 = sqrt(perimeter3 * (perimeter3 - inner_edge3) * (perimeter3 - inner_edge1) * (perimeter3 - edge3));
+        area1 = sqrt(abs(perimeter1 * (perimeter1 - inner_edge1) * (perimeter1 - inner_edge2) * (perimeter1 - edge1)));
+        area2 = sqrt(abs(perimeter2 * (perimeter2 - inner_edge2) * (perimeter2 - inner_edge3) * (perimeter2 - edge2)));
+        area3 = sqrt(abs(perimeter3 * (perimeter3 - inner_edge3) * (perimeter3 - inner_edge1) * (perimeter3 - edge3)));
 
-        if (area1+area2+area3 == tri_area){
+        if (abs(tri_area - (area1+area2+area3)) <= thresh){
           node_count += 1;
+        }
+        else{
+          TC_TRACE("SUM AREA: {}", area1+area2+area3);
         }
       }
     }
@@ -558,11 +562,11 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
         perimeter2 = (inner_edge2 + inner_edge3 + edge2)/2;
         perimeter3 = (inner_edge3 + inner_edge1 + edge3)/2;
 
-        area1 = sqrt(perimeter1 * (perimeter1 - inner_edge1) * (perimeter1 - inner_edge2) * (perimeter1 - edge1));
-        area2 = sqrt(perimeter2 * (perimeter2 - inner_edge2) * (perimeter2 - inner_edge3) * (perimeter2 - edge2));
-        area3 = sqrt(perimeter3 * (perimeter3 - inner_edge3) * (perimeter3 - inner_edge1) * (perimeter3 - edge3));
+        area1 = sqrt(abs(perimeter1 * (perimeter1 - inner_edge1) * (perimeter1 - inner_edge2) * (perimeter1 - edge1)));
+        area2 = sqrt(abs(perimeter2 * (perimeter2 - inner_edge2) * (perimeter2 - inner_edge3) * (perimeter2 - edge2)));
+        area3 = sqrt(abs(perimeter3 * (perimeter3 - inner_edge3) * (perimeter3 - inner_edge1) * (perimeter3 - edge3)));
 
-        if (area1+area2+area3 == tri_area){
+        if (abs(tri_area - (area1+area2+area3)) <= thresh){
           add_force(ind.get_ipos(), f * (1.0_f / node_count), Vectori(1));
         }
       }
@@ -647,6 +651,7 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
                                       Vector p1,
                                       Vector p2,
                                       real scale,
+                                      real thresh=0.003,
                                       Vector value = Vector(0)) {
     auto sparse_flags = grid->flags();
 
@@ -699,11 +704,11 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
         perimeter2 = (inner_edge2 + inner_edge3 + edge2)/2;
         perimeter3 = (inner_edge3 + inner_edge1 + edge3)/2;
 
-        area1 = sqrt(perimeter1 * (perimeter1 - inner_edge1) * (perimeter1 - inner_edge2) * (perimeter1 - edge1));
-        area2 = sqrt(perimeter2 * (perimeter2 - inner_edge2) * (perimeter2 - inner_edge3) * (perimeter2 - edge2));
-        area3 = sqrt(perimeter3 * (perimeter3 - inner_edge3) * (perimeter3 - inner_edge1) * (perimeter3 - edge3));
-
-        if (area1+area2+area3 == tri_area){
+        area1 = sqrt(abs(perimeter1 * (perimeter1 - inner_edge1) * (perimeter1 - inner_edge2) * (perimeter1 - edge1)));
+        area2 = sqrt(abs(perimeter2 * (perimeter2 - inner_edge2) * (perimeter2 - inner_edge3) * (perimeter2 - edge2)));
+        area3 = sqrt(abs(perimeter3 * (perimeter3 - inner_edge3) * (perimeter3 - inner_edge1) * (perimeter3 - edge3)));
+        
+        if (abs(tri_area - (area1+area2+area3)) <= thresh){
           add_cell_boundary(ind.get_ipos(), fix_to_zero, value);
         }
       }

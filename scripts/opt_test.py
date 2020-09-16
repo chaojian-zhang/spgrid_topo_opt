@@ -14,7 +14,8 @@ opt.general_action(action='voxel_connectivity_filtering')
 
 # opt.add_plane_dirichlet_bc(axis_to_fix="xyz", axis_to_search=2, extreme=-1)
 opt.add_customplane_dirichlet_bc(axis_to_fix="xyz", p0=(-1.234312, -1.000000, -1.000000), p1=(-1.234312, 1.000000, -1.000000), p2=(0.678907, -1.000000, -1.000000))
-opt.add_customplane_dirichlet_bc(axis_to_fix="xyz", p0=(-1.234312, -1.000000, -1.000000), p1=(-1.234312, 1.000000, -1.000000), p2=(0.678907, -1.000000, -1.000000))
+opt.add_customplane_dirichlet_bc(axis_to_fix="xyz", p0=(0.678907, -1.000000, -1.000000), p1=(-1.234312, 1.000000, -1.000000), p2=(0.678907, 1.000000, -1.000000))
+
 opt.add_customplane_load(force=(0, 0, -1), p0=(0.678907, 1.000000, 1.000000), p1=(-1.234312, -1.000000, 1.000000), p2=(0.678907, -1.000000, 1.000000))
 opt.add_customplane_load(force=(0, 0, -1), p0=(0.678907, 1.000000, 1.000000), p1=(-1.234312, 1.000000, 1.000000), p2=(-1.234312, -1.000000, 1.000000))
 
