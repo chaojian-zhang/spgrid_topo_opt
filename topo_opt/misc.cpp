@@ -55,6 +55,7 @@ auto convert_fem_solve = [](const std::vector<std::string> &parameters) {
 
   TC_ASSERT(parameters.size() >= 1);
   std::string file_name = parameters[0];
+  std::string output_filename = parameters[1];
 
   FEMInterface interface;
   FEMInputs &param = interface.param;
@@ -88,7 +89,7 @@ auto convert_fem_solve = [](const std::vector<std::string> &parameters) {
   }
 
   // override with --all
-  if (parameters.size() <= 1) {
+  if (parameters.size() >= 1) {
     param.forces.clear();
     param.dirichlet_cells.clear();
     param.dirichlet_nodes.clear();
@@ -96,7 +97,7 @@ auto convert_fem_solve = [](const std::vector<std::string> &parameters) {
 
   TextSerializer ser2;
   ser2("FEM Solve Parameters", param);
-  ser2.write_to_file("params.txt");
+  ser2.write_to_file(output_filename);
 };
 
 TC_REGISTER_TASK(convert_fem_solve);
