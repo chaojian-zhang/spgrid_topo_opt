@@ -541,9 +541,6 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
         if (abs(tri_area - (area1+area2+area3)) <= thresh){
           node_count += 1;
         }
-        else{
-          TC_TRACE("SUM AREA: {}", area1+area2+area3);
-        }
       }
     }
     TC_TRACE("Adding force to {} nodes.", node_count);
@@ -794,7 +791,7 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
     // TC_ASSERT(density(ipos) > 0);
     if (fix_cells_at_dirichlet) {
       flags(ipos).set_fixed_density(true);
-      density(ipos) = 1;
+      density(ipos) = fixed_cell_density_;
     }
     for (auto n : node_region) {
       Vectori node = ipos + n.get_ipos();

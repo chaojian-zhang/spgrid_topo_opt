@@ -16,3 +16,7 @@ topopt2d
 .hg
 .vscode/settings.json
 .gitignore
+data/split-chair.obj
+.gitignore
+scripts/opt_anton.py
+scripts/topopt_test.py
