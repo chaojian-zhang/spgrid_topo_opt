@@ -20,3 +20,7 @@ data/split-chair.obj
 .gitignore
 scripts/opt_anton.py
 scripts/topopt_test.py
+data/Cube.obj
+data/fixed.npy
+data/force_vectors.npy
+data/forces.npy

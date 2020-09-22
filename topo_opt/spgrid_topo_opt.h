@@ -487,8 +487,7 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
                               Vector p0,
                               Vector p1,
                               Vector p2,
-                              real scale,
-                              real thresh=0.003) {
+                              real scale) {
     int node_count = 0;
 
     Vectori p0n = ((scale * p0 + Vector(0.5_f)) * inv_dx).template cast<int>();
@@ -499,72 +498,67 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
     Vector ptp1 = p1n.template cast<real>() * dx - Vector(0.5_f);
     Vector ptp2 = p2n.template cast<real>() * dx - Vector(0.5_f);
 
-    Vector at = ptp1 - ptp0;
-    Vector bt = ptp2 - ptp0;
-    Vector ct = ptp2 - ptp1;
-
-    real edge1 = sqrt(at[0]*at[0] + at[1]*at[1] + at[2]*at[2]);
-    real edge3 = sqrt(bt[0]*bt[0] + bt[1]*bt[1] + bt[2]*bt[2]);
-    real edge2 = sqrt(ct[0]*ct[0] + ct[1]*ct[1] + ct[2]*ct[2]);
-
-    real perim = (edge1 + edge2 + edge3)/2;
-    real tri_area = sqrt(perim * (perim - edge1) * (perim - edge2) * (perim - edge3));
-
-    real a = at[1]*bt[2] - bt[1]*at[2];
-    real b = bt[0]*at[2] - at[0]*bt[2];
-    real c = at[0]*bt[1] - at[1]*bt[0];
-    real d = - a*ptp0[0] - b*ptp0[1] - c*ptp0[2];
-
+    int i;
+    real m1, m2, m3;
     Vector p, att, btt, ctt;
-    real inner_edge1, inner_edge2, inner_edge3, perimeter1, perimeter2, perimeter3;
-    real area1, area2, area3;
+    real pnew0, pnew1, pnew2;
+    real anglesum=0, cos1theta, cos2theta, cos3theta;
+    real epsilon = 0.0000001;
+    real twopi = 6.2831853;
 
     for (auto &ind : get_node_region()) {
       p = normalize_pos(ind.get_pos());
-      if (node_flag(ind.get_ipos()) && a*p[0]+b*p[1]+c*p[2]+d == 0) {
+      if (node_flag(ind.get_ipos())) {
+
         att = ptp0 - p;
         btt = ptp1 - p;
         ctt = ptp2 - p;
 
-        inner_edge1 = sqrt(att[0]*att[0] + att[1]*att[1] + att[2]*att[2]);
-        inner_edge2 = sqrt(btt[0]*btt[0] + btt[1]*btt[1] + btt[2]*btt[2]);
-        inner_edge3 = sqrt(ctt[0]*ctt[0] + ctt[1]*ctt[1] + ctt[2]*ctt[2]);
+        m1 = sqrt(att[0]*att[0] + att[1]*att[1] + att[2]*att[2]);
+        m2 = sqrt(btt[0]*btt[0] + btt[1]*btt[1] + btt[2]*btt[2]);
+        m3 = sqrt(ctt[0]*ctt[0] + ctt[1]*ctt[1] + ctt[2]*ctt[2]);
 
-        perimeter1 = (inner_edge1 + inner_edge2 + edge1)/2;
-        perimeter2 = (inner_edge2 + inner_edge3 + edge2)/2;
-        perimeter3 = (inner_edge3 + inner_edge1 + edge3)/2;
+        if (m1*m2 <= epsilon || m2*m3 <= epsilon || m3*m1 <= epsilon) {
+          anglesum = twopi;
+        }
+        else {
+          cos1theta = (att[0]*btt[0] + att[1]*btt[1] + att[2]*btt[2])/(m1*m2);
+          cos2theta = (btt[0]*ctt[0] + btt[1]*ctt[1] + btt[2]*ctt[2])/(m2*m3);
+          cos3theta = (ctt[0]*att[0] + ctt[1]*att[1] + ctt[2]*att[2])/(m3*m1);
 
-        area1 = sqrt(abs(perimeter1 * (perimeter1 - inner_edge1) * (perimeter1 - inner_edge2) * (perimeter1 - edge1)));
-        area2 = sqrt(abs(perimeter2 * (perimeter2 - inner_edge2) * (perimeter2 - inner_edge3) * (perimeter2 - edge2)));
-        area3 = sqrt(abs(perimeter3 * (perimeter3 - inner_edge3) * (perimeter3 - inner_edge1) * (perimeter3 - edge3)));
+          anglesum = acos(cos1theta) + acos(cos2theta) + acos(cos3theta);
+        }
 
-        if (abs(tri_area - (area1+area2+area3)) <= thresh){
-          node_count += 1;
+        if (abs(anglesum - twopi) <= epsilon) {
+          node_count += 1;         
         }
       }
     }
     TC_TRACE("Adding force to {} nodes.", node_count);
     for (auto &ind : get_node_region()) {
       p = normalize_pos(ind.get_pos());
-      if (node_flag(ind.get_ipos()) && a*p[0]+b*p[1]+c*p[2]+d == 0) {
+      if (node_flag(ind.get_ipos())) {
         att = ptp0 - p;
         btt = ptp1 - p;
         ctt = ptp2 - p;
 
-        inner_edge1 = sqrt(att[0]*att[0] + att[1]*att[1] + att[2]*att[2]);
-        inner_edge2 = sqrt(btt[0]*btt[0] + btt[1]*btt[1] + btt[2]*btt[2]);
-        inner_edge3 = sqrt(ctt[0]*ctt[0] + ctt[1]*ctt[1] + ctt[2]*ctt[2]);
+        m1 = sqrt(att[0]*att[0] + att[1]*att[1] + att[2]*att[2]);
+        m2 = sqrt(btt[0]*btt[0] + btt[1]*btt[1] + btt[2]*btt[2]);
+        m3 = sqrt(ctt[0]*ctt[0] + ctt[1]*ctt[1] + ctt[2]*ctt[2]);
 
-        perimeter1 = (inner_edge1 + inner_edge2 + edge1)/2;
-        perimeter2 = (inner_edge2 + inner_edge3 + edge2)/2;
-        perimeter3 = (inner_edge3 + inner_edge1 + edge3)/2;
+        if (m1*m2 <= epsilon || m2*m3 <= epsilon || m3*m1 <= epsilon) {
+          anglesum = twopi;
+        }
+        else {
+          cos1theta = (att[0]*btt[0] + att[1]*btt[1] + att[2]*btt[2])/(m1*m2);
+          cos2theta = (btt[0]*ctt[0] + btt[1]*ctt[1] + btt[2]*ctt[2])/(m2*m3);
+          cos3theta = (ctt[0]*att[0] + ctt[1]*att[1] + ctt[2]*att[2])/(m3*m1);
 
-        area1 = sqrt(abs(perimeter1 * (perimeter1 - inner_edge1) * (perimeter1 - inner_edge2) * (perimeter1 - edge1)));
-        area2 = sqrt(abs(perimeter2 * (perimeter2 - inner_edge2) * (perimeter2 - inner_edge3) * (perimeter2 - edge2)));
-        area3 = sqrt(abs(perimeter3 * (perimeter3 - inner_edge3) * (perimeter3 - inner_edge1) * (perimeter3 - edge3)));
+          anglesum = acos(cos1theta) + acos(cos2theta) + acos(cos3theta);
+        }
 
-        if (abs(tri_area - (area1+area2+area3)) <= thresh){
-          add_force(ind.get_ipos(), f * (1.0_f / node_count), Vectori(1));
+        if (abs(anglesum - twopi) <= epsilon) {
+          add_force(ind.get_ipos(), f * (1.0_f / node_count), Vectori(1));         
         }
       }
     }
@@ -609,7 +603,7 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
         cell_count += 1;
       }
     }
-    TC_TRACE("Adding force to {} cells (faces).", cell_count);
+    TC_TRACE("Adding force to {} cells.", cell_count);
     auto offsets = {Vector3i(0, 0, 0), Vector3i(-1, 0, 0), Vector3i(0, 0, -1),
                     Vector3i(-1, 0, -1)};
     auto count = 0;
@@ -631,6 +625,15 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
     TC_P(total_scale);
   }
 
+  real sgn(real val) {
+    if (val>=0.0) {
+      return 1.0;
+    }
+    else {
+      return -1.0;
+    }    
+  }
+
   bool node_flag(Vectori ipos) const {
     auto sparse_flags = grid->flags();
     bool has_neighbour = false;
@@ -648,7 +651,6 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
                                       Vector p1,
                                       Vector p2,
                                       real scale,
-                                      real thresh=0.003,
                                       Vector value = Vector(0)) {
     auto sparse_flags = grid->flags();
 
@@ -660,56 +662,49 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
     Vector ptp1 = p1n.template cast<real>() * dx - Vector(0.5_f);
     Vector ptp2 = p2n.template cast<real>() * dx - Vector(0.5_f);
 
-    Vector at = ptp1 - ptp0;
-    Vector bt = ptp2 - ptp0;
-    Vector ct = ptp2 - ptp1;
-
-    real edge1 = sqrt(at[0]*at[0] + at[1]*at[1] + at[2]*at[2]);
-    real edge3 = sqrt(bt[0]*bt[0] + bt[1]*bt[1] + bt[2]*bt[2]);
-    real edge2 = sqrt(ct[0]*ct[0] + ct[1]*ct[1] + ct[2]*ct[2]);
-
-    real perim = (edge1 + edge2 + edge3)/2;
-    real tri_area = sqrt(perim * (perim - edge1) * (perim - edge2) * (perim - edge3));
-
-    real a = at[1]*bt[2] - bt[1]*at[2];
-    real b = bt[0]*at[2] - at[0]*bt[2];
-    real c = at[0]*bt[1] - at[1]*bt[0];
-    real d = - a*ptp0[0] - b*ptp0[1] - c*ptp0[2];
-
+    int i, count=0;
+    real m1, m2, m3;
     Vector p, att, btt, ctt;
-    real inner_edge1, inner_edge2, inner_edge3, perimeter1, perimeter2, perimeter3;
-    real area1, area2, area3;
     real pnew0, pnew1, pnew2;
+    real anglesum=0, cos1theta, cos2theta, cos3theta;
+    real epsilon = 0.0000001;
+    real twopi = 6.2831853;
 
     for (auto &ind : get_cell_region()) {
       p = normalize_pos(ind.get_pos());
-      pnew0 = p[0] + p[0]/abs(p[0]) * dx/2;
-      pnew1 = p[1] + p[1]/abs(p[1]) * dx/2;
-      pnew2 = p[2] + p[2]/abs(p[2]) * dx/2;
+      pnew0 = p[0] + sgn(p[0]) * dx/2;
+      pnew1 = p[1] + sgn(p[1]) * dx/2;
+      pnew2 = p[2] + sgn(p[2]) * dx/2;
       p = Vector(pnew0, pnew1, pnew2);
 
-      if (sparse_flags(ind.get_ipos()).get_inside_container() && a*p[0]+b*p[1]+c*p[2]+d == 0) {
+      if (sparse_flags(ind.get_ipos()).get_inside_container()) {
+
         att = ptp0 - p;
         btt = ptp1 - p;
         ctt = ptp2 - p;
 
-        inner_edge1 = sqrt(att[0]*att[0] + att[1]*att[1] + att[2]*att[2]);
-        inner_edge2 = sqrt(btt[0]*btt[0] + btt[1]*btt[1] + btt[2]*btt[2]);
-        inner_edge3 = sqrt(ctt[0]*ctt[0] + ctt[1]*ctt[1] + ctt[2]*ctt[2]);
+        m1 = sqrt(att[0]*att[0] + att[1]*att[1] + att[2]*att[2]);
+        m2 = sqrt(btt[0]*btt[0] + btt[1]*btt[1] + btt[2]*btt[2]);
+        m3 = sqrt(ctt[0]*ctt[0] + ctt[1]*ctt[1] + ctt[2]*ctt[2]);
 
-        perimeter1 = (inner_edge1 + inner_edge2 + edge1)/2;
-        perimeter2 = (inner_edge2 + inner_edge3 + edge2)/2;
-        perimeter3 = (inner_edge3 + inner_edge1 + edge3)/2;
-
-        area1 = sqrt(abs(perimeter1 * (perimeter1 - inner_edge1) * (perimeter1 - inner_edge2) * (perimeter1 - edge1)));
-        area2 = sqrt(abs(perimeter2 * (perimeter2 - inner_edge2) * (perimeter2 - inner_edge3) * (perimeter2 - edge2)));
-        area3 = sqrt(abs(perimeter3 * (perimeter3 - inner_edge3) * (perimeter3 - inner_edge1) * (perimeter3 - edge3)));
-        
-        if (abs(tri_area - (area1+area2+area3)) <= thresh){
-          add_cell_boundary(ind.get_ipos(), fix_to_zero, value);
+        if (m1*m2 <= epsilon || m2*m3 <= epsilon || m3*m1 <= epsilon) {
+          anglesum = twopi;
         }
+        else {
+          cos1theta = (att[0]*btt[0] + att[1]*btt[1] + att[2]*btt[2])/(m1*m2);
+          cos2theta = (btt[0]*ctt[0] + btt[1]*ctt[1] + btt[2]*ctt[2])/(m2*m3);
+          cos3theta = (ctt[0]*att[0] + ctt[1]*att[1] + ctt[2]*att[2])/(m3*m1);
+
+          anglesum = acos(cos1theta) + acos(cos2theta) + acos(cos3theta);
+        }
+
+        if (abs(anglesum - twopi) <= epsilon) {
+          count += 1;
+          add_cell_boundary(ind.get_ipos(), fix_to_zero, value);          
+        }     
       }
     }
+    TC_TRACE("Adding Dirichlet BC to {} cells.", count);
   }
 
   // extreme = +/-1
