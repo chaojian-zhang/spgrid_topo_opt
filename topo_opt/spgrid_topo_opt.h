@@ -463,6 +463,10 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
     return i2f(ind);
   }
 
+  Vector vect_ceil(Vector xpos) {
+    return Vector(ceil(xpos[0]), ceil(xpos[1]), ceil(xpos[2]));
+  }
+
   real get_volume_fraction(int iter) {
     int steps = config.get("progressive_vol_frac", 0);
     if (steps == 0) {
@@ -490,13 +494,9 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
                               real scale) {
     int node_count = 0;
 
-    Vectori p0n = ((scale * p0 + Vector(0.5_f)) * inv_dx).template cast<int>();
-    Vectori p1n = ((scale * p1 + Vector(0.5_f)) * inv_dx).template cast<int>();
-    Vectori p2n = ((scale * p2 + Vector(0.5_f)) * inv_dx).template cast<int>();
-
-    Vector ptp0 = p0n.template cast<real>() * dx - Vector(0.5_f);
-    Vector ptp1 = p1n.template cast<real>() * dx - Vector(0.5_f);
-    Vector ptp2 = p2n.template cast<real>() * dx - Vector(0.5_f);
+    Vector ptp0 = vect_ceil((scale * p0 + Vector(0.5_f)) * inv_dx) * dx - Vector(0.5_f);
+    Vector ptp1 = vect_ceil((scale * p1 + Vector(0.5_f)) * inv_dx) * dx - Vector(0.5_f);
+    Vector ptp2 = vect_ceil((scale * p2 + Vector(0.5_f)) * inv_dx) * dx - Vector(0.5_f);
 
     int i;
     real m1, m2, m3;
@@ -507,7 +507,7 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
     real twopi = 6.2831853;
 
     for (auto &ind : get_node_region()) {
-      p = normalize_pos(ind.get_pos());
+      p = normalize_pos(ind.get_pos());   
       if (node_flag(ind.get_ipos())) {
 
         att = ptp0 - p;
@@ -654,13 +654,13 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
                                       Vector value = Vector(0)) {
     auto sparse_flags = grid->flags();
 
-    Vectori p0n = ((scale * p0 + Vector(0.5_f)) * inv_dx).template cast<int>();
-    Vectori p1n = ((scale * p1 + Vector(0.5_f)) * inv_dx).template cast<int>();
-    Vectori p2n = ((scale * p2 + Vector(0.5_f)) * inv_dx).template cast<int>();
+    Vector ptp0 = vect_ceil((scale * p0 + Vector(0.5_f)) * inv_dx) * dx - Vector(0.5_f);
+    Vector ptp1 = vect_ceil((scale * p1 + Vector(0.5_f)) * inv_dx) * dx - Vector(0.5_f);
+    Vector ptp2 = vect_ceil((scale * p2 + Vector(0.5_f)) * inv_dx) * dx - Vector(0.5_f);
 
-    Vector ptp0 = p0n.template cast<real>() * dx - Vector(0.5_f);
-    Vector ptp1 = p1n.template cast<real>() * dx - Vector(0.5_f);
-    Vector ptp2 = p2n.template cast<real>() * dx - Vector(0.5_f);
+    TC_TRACE("VECTOR-FACE x: {}", ptp0[0]);
+    TC_TRACE("VECTOR-FACE y: {}", ptp0[1]);
+    TC_TRACE("VECTOR-FACE z: {}", ptp0[2]);
 
     int i, count=0;
     real m1, m2, m3;
@@ -677,7 +677,11 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
       pnew2 = p[2] + sgn(p[2]) * dx/2;
       p = Vector(pnew0, pnew1, pnew2);
 
-      if (sparse_flags(ind.get_ipos()).get_inside_container()) {
+      // if (sparse_flags(ind.get_ipos()).get_inside_container()) {
+      if (true) {
+        TC_TRACE("DBC POS[0]: {}", p[0]);
+        TC_TRACE("DBC POS[1]: {}", p[1]);
+        TC_TRACE("DBC POS[2]: {}", p[2]);
 
         att = ptp0 - p;
         btt = ptp1 - p;
