@@ -464,7 +464,7 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
   }
 
   Vector vect_ceil(Vector xpos) {
-    return Vector(ceil(xpos[0]), ceil(xpos[1]), ceil(xpos[2]));
+    return Vector(llround(xpos[0]), llround(xpos[1]), llround(xpos[2]));
   }
 
   real get_volume_fraction(int iter) {
