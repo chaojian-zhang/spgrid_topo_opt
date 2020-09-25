@@ -646,6 +646,77 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
     return has_neighbour;
   }
 
+
+  void add_customnodes_dirichlet_bc(const std::string &fix_to_zero,
+                                      Vector p0,
+                                      Vector p1,
+                                      Vector p2,
+                                      real scale,
+                                      Vector value = Vector(0)) {
+    auto sparse_flags = grid->flags();
+
+    Vector ptp0 = vect_ceil((scale * p0 + Vector(0.5_f)) * inv_dx) * dx - Vector(0.5_f);
+    Vector ptp1 = vect_ceil((scale * p1 + Vector(0.5_f)) * inv_dx) * dx - Vector(0.5_f);
+    Vector ptp2 = vect_ceil((scale * p2 + Vector(0.5_f)) * inv_dx) * dx - Vector(0.5_f);
+
+    Vector at = ptp1 - ptp0;
+    Vector bt = ptp2 - ptp0;
+    Vector ct = ptp2 - ptp1;
+
+    real edge1 = sqrt(at[0]*at[0] + at[1]*at[1] + at[2]*at[2]);
+    real edge3 = sqrt(bt[0]*bt[0] + bt[1]*bt[1] + bt[2]*bt[2]);
+    real edge2 = sqrt(ct[0]*ct[0] + ct[1]*ct[1] + ct[2]*ct[2]);
+
+    real perim = (edge1 + edge2 + edge3)/2;
+    real tri_area = sqrt(perim * (perim - edge1) * (perim - edge2) * (perim - edge3));
+
+    real a = at[1]*bt[2] - bt[1]*at[2];
+    real b = bt[0]*at[2] - at[0]*bt[2];
+    real c = at[0]*bt[1] - at[1]*bt[0];
+    real d = - a*ptp0[0] - b*ptp0[1] - c*ptp0[2];
+
+    int count=0;
+    Vector p, att, btt, ctt;
+    real inner_edge1, inner_edge2, inner_edge3, perimeter1, perimeter2, perimeter3;
+    real area1, area2, area3;
+    real pnew0, pnew1, pnew2;
+    real epsilon = 0.00001;
+
+    for (auto &ind : get_cell_region()) {
+      p = normalize_pos(ind.get_pos());
+      pnew0 = p[0] + p[0]/abs(p[0]) * dx/2;
+      pnew1 = p[1] + p[1]/abs(p[1]) * dx/2;
+      pnew2 = p[2] + p[2]/abs(p[2]) * dx/2;
+      p = Vector(pnew0, pnew1, pnew2);
+
+      if (sparse_flags(ind.get_ipos()).get_inside_container() && abs(a*p[0]+b*p[1]+c*p[2]+d) <= epsilon) {
+        // TC_TRACE("AREA PPOS {} {} {}", p[0], p[1], p[2]);
+        att = ptp0 - p;
+        btt = ptp1 - p;
+        ctt = ptp2 - p;
+
+        inner_edge1 = sqrt(att[0]*att[0] + att[1]*att[1] + att[2]*att[2]);
+        inner_edge2 = sqrt(btt[0]*btt[0] + btt[1]*btt[1] + btt[2]*btt[2]);
+        inner_edge3 = sqrt(ctt[0]*ctt[0] + ctt[1]*ctt[1] + ctt[2]*ctt[2]);
+
+        perimeter1 = (inner_edge1 + inner_edge2 + edge1)/2;
+        perimeter2 = (inner_edge2 + inner_edge3 + edge2)/2;
+        perimeter3 = (inner_edge3 + inner_edge1 + edge3)/2;
+
+        area1 = sqrt(abs(perimeter1 * (perimeter1 - inner_edge1) * (perimeter1 - inner_edge2) * (perimeter1 - edge1)));
+        area2 = sqrt(abs(perimeter2 * (perimeter2 - inner_edge2) * (perimeter2 - inner_edge3) * (perimeter2 - edge2)));
+        area3 = sqrt(abs(perimeter3 * (perimeter3 - inner_edge3) * (perimeter3 - inner_edge1) * (perimeter3 - edge3)));
+        
+        if (abs(tri_area - (area1+area2+area3)) <= epsilon){
+          count += 1;
+          // TC_TRACE("AREA IPOS {} {} {}", ind.get_ipos()[0], ind.get_ipos()[1], ind.get_ipos()[2]);
+          add_cell_boundary(ind.get_ipos(), fix_to_zero, value);
+        }
+      }
+    }
+    TC_TRACE("Adding Dirichlet BC to {} cells.", count);
+  }
+
   void add_customplane_dirichlet_bc(const std::string &fix_to_zero,
                                       Vector p0,
                                       Vector p1,
@@ -658,16 +729,12 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
     Vector ptp1 = vect_ceil((scale * p1 + Vector(0.5_f)) * inv_dx) * dx - Vector(0.5_f);
     Vector ptp2 = vect_ceil((scale * p2 + Vector(0.5_f)) * inv_dx) * dx - Vector(0.5_f);
 
-    TC_TRACE("VECTOR-FACE x: {}", ptp0[0]);
-    TC_TRACE("VECTOR-FACE y: {}", ptp0[1]);
-    TC_TRACE("VECTOR-FACE z: {}", ptp0[2]);
-
     int i, count=0;
     real m1, m2, m3;
     Vector p, att, btt, ctt;
     real pnew0, pnew1, pnew2;
     real anglesum=0, cos1theta, cos2theta, cos3theta;
-    real epsilon = 0.0000001;
+    real epsilon = 0.00001;
     real twopi = 6.2831853;
 
     for (auto &ind : get_cell_region()) {
@@ -676,12 +743,13 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
       pnew1 = p[1] + sgn(p[1]) * dx/2;
       pnew2 = p[2] + sgn(p[2]) * dx/2;
       p = Vector(pnew0, pnew1, pnew2);
+      
+      if (sparse_flags(ind.get_ipos()).get_inside_container()) {
+        // TC_TRACE("ANGLE PPOS {} {} {}", p[0], p[1], p[2]);
 
-      // if (sparse_flags(ind.get_ipos()).get_inside_container()) {
-      if (true) {
-        TC_TRACE("DBC POS[0]: {}", p[0]);
-        TC_TRACE("DBC POS[1]: {}", p[1]);
-        TC_TRACE("DBC POS[2]: {}", p[2]);
+        // TC_TRACE("DBC POS[0]: {}", p[0]);
+        // TC_TRACE("DBC POS[1]: {}", p[1]);
+        // TC_TRACE("DBC POS[2]: {}", p[2]);
 
         att = ptp0 - p;
         btt = ptp1 - p;
@@ -704,6 +772,7 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
 
         if (abs(anglesum - twopi) <= epsilon) {
           count += 1;
+          // TC_TRACE("ANGLE IPOS {} {} {}", ind.get_ipos()[0], ind.get_ipos()[1], ind.get_ipos()[2]);
           add_cell_boundary(ind.get_ipos(), fix_to_zero, value);          
         }     
       }
@@ -782,6 +851,9 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
   bool add_cell_boundary(Vectori ipos,
                          const std::string &axis = "xyz",
                          Vector value = Vector(0)) {
+    // TC_TRACE("NODES IPOS x: {}", ipos[0]);
+    // TC_TRACE("NODES IPOS y: {}", ipos[1]);
+    // TC_TRACE("NODES IPOS z: {}", ipos[2]);                              
     bool failed_bc = false;
     Region node_region = Region(Vectori(0), Vectori(2));
     auto flags = grid->flags();
@@ -793,7 +865,7 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
       density(ipos) = fixed_cell_density_;
     }
     for (auto n : node_region) {
-      Vectori node = ipos + n.get_ipos();
+      Vectori node = ipos + n.get_ipos();      
       for (int i = 0; i < dim; i++) {
         if (axis.find('x' + char(i)) != std::string::npos) {
           if (add_node_boundary(node, i, value[i])) {

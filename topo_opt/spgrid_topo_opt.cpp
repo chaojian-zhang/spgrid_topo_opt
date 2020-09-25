@@ -817,6 +817,13 @@ std::string SPGridTopologyOptimization3D::general_action(const Config &param) {
         param.get<Vector>("p1"),
         param.get<Vector>("p2"),
         param.get<real>("scale"));
+  } else if (action == "add_customnodes_dirichlet_bc") {
+    add_customnodes_dirichlet_bc(
+        param.get<std::string>("axis_to_fix"), 
+        param.get<Vector>("p0"),
+        param.get<Vector>("p1"),
+        param.get<Vector>("p2"),
+        param.get<real>("scale"));        
   } else if (action == "populate_grid") {
     populate_grid(param);
   } else if (action == "wireframe") {
