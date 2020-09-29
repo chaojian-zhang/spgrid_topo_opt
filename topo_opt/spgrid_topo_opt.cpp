@@ -757,7 +757,8 @@ std::string SPGridTopologyOptimization3D::general_action(const Config &param) {
                     param.get<Vector>("p0"),
                     param.get<Vector>("p1"),
                     param.get<Vector>("p2"),
-                    param.get<real>("scale"));
+                    param.get<real>("scale"),
+                    param.get<real>("epsilon"));
   } else if (action == "add_plane_load") {
     add_plane_force(param.get<Vector>("force"), param.get<int>("axis"),
                     param.get<int>("extreme"), param.get<Vector>("bound1"),
@@ -816,14 +817,16 @@ std::string SPGridTopologyOptimization3D::general_action(const Config &param) {
         param.get<Vector>("p0"),
         param.get<Vector>("p1"),
         param.get<Vector>("p2"),
-        param.get<real>("scale"));
+        param.get<real>("scale"),
+        param.get<real>("epsilon"));
   } else if (action == "add_customnodes_dirichlet_bc") {
     add_customnodes_dirichlet_bc(
         param.get<std::string>("axis_to_fix"), 
         param.get<Vector>("p0"),
         param.get<Vector>("p1"),
         param.get<Vector>("p2"),
-        param.get<real>("scale"));        
+        param.get<real>("scale"),
+        param.get<real>("epsilon"));        
   } else if (action == "populate_grid") {
     populate_grid(param);
   } else if (action == "wireframe") {

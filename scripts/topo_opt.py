@@ -172,15 +172,14 @@ class TopoOpt(Simulation):
   def add_load(self, center, force, size=1e-6):
     self.general_action('add_load', center=center, force=force, size=size)
 
-  def add_customplane_dirichlet_bc(self, axis_to_fix, p0, p1, p2):
-    self.general_action(action='add_customplane_dirichlet_bc', axis_to_fix=axis_to_fix, p0=tuple(p0), p1=tuple(p1), p2=tuple(p2), scale=self.scale)
+  def add_customplane_dirichlet_bc(self, axis_to_fix, p0, p1, p2, thresh=0.001):
+    self.general_action(action='add_customplane_dirichlet_bc', axis_to_fix=axis_to_fix, p0=tuple(p0), p1=tuple(p1), p2=tuple(p2), scale=self.scale, epsilon=thresh,)
 
-  def add_customnodes_dirichlet_bc(self, axis_to_fix, p0, p1, p2):
-    self.general_action(action='add_customnodes_dirichlet_bc', axis_to_fix=axis_to_fix, p0=tuple(p0), p1=tuple(p1), p2=tuple(p2), scale=self.scale)
+  def add_customnodes_dirichlet_bc(self, axis_to_fix, p0, p1, p2, thresh=0.001):
+    self.general_action(action='add_customnodes_dirichlet_bc', axis_to_fix=axis_to_fix, p0=tuple(p0), p1=tuple(p1), p2=tuple(p2), scale=self.scale, epsilon=thresh)
 
-
-  def add_customplane_load(self, force, p0, p1, p2):
-    self.general_action(action='add_customplane_load', force=tuple(force), p0=tuple(p0), p1=tuple(p1), p2=tuple(p2), scale=self.scale)
+  def add_customplane_load(self, force, p0, p1, p2, thresh=0.00001):
+    self.general_action(action='add_customplane_load', force=tuple(force), p0=tuple(p0), p1=tuple(p1), p2=tuple(p2), scale=self.scale, epsilon=thresh)
 
   def add_plane_load(self, force, axis_to_search=None, axis=None, extreme=1, bound1=(-1, -1, -1), bound2=(1, 1, 1)):
     if axis_to_search is None:

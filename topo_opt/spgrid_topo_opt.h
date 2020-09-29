@@ -491,7 +491,8 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
                               Vector p0,
                               Vector p1,
                               Vector p2,
-                              real scale) {
+                              real scale,
+                              real epsilon) {
     int node_count = 0;
 
     Vector ptp0 = vect_ceil((scale * p0 + Vector(0.5_f)) * inv_dx) * dx - Vector(0.5_f);
@@ -503,7 +504,6 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
     Vector p, att, btt, ctt;
     real pnew0, pnew1, pnew2;
     real anglesum=0, cos1theta, cos2theta, cos3theta;
-    real epsilon = 0.0000001;
     real twopi = 6.2831853;
 
     for (auto &ind : get_node_region()) {
@@ -652,6 +652,7 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
                                       Vector p1,
                                       Vector p2,
                                       real scale,
+                                      real epsilon,
                                       Vector value = Vector(0)) {
     auto sparse_flags = grid->flags();
 
@@ -680,7 +681,6 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
     real inner_edge1, inner_edge2, inner_edge3, perimeter1, perimeter2, perimeter3;
     real area1, area2, area3;
     real pnew0, pnew1, pnew2;
-    real epsilon = 0.00001;
 
     for (auto &ind : get_cell_region()) {
       p = normalize_pos(ind.get_pos());
@@ -722,9 +722,9 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
                                       Vector p1,
                                       Vector p2,
                                       real scale,
+                                      real epsilon,
                                       Vector value = Vector(0)) {
     auto sparse_flags = grid->flags();
-
     Vector ptp0 = vect_ceil((scale * p0 + Vector(0.5_f)) * inv_dx) * dx - Vector(0.5_f);
     Vector ptp1 = vect_ceil((scale * p1 + Vector(0.5_f)) * inv_dx) * dx - Vector(0.5_f);
     Vector ptp2 = vect_ceil((scale * p2 + Vector(0.5_f)) * inv_dx) * dx - Vector(0.5_f);
@@ -734,7 +734,6 @@ class SPGridTopologyOptimization3D : public Simulation<3> {
     Vector p, att, btt, ctt;
     real pnew0, pnew1, pnew2;
     real anglesum=0, cos1theta, cos2theta, cos3theta;
-    real epsilon = 0.00001;
     real twopi = 6.2831853;
 
     for (auto &ind : get_cell_region()) {
